@@ -464,15 +464,10 @@ func (builder *STI) Exists(config *api.Config) bool {
 		return false
 	}
 
-	policy := config.PreviousImagePullPolicy
-	if len(policy) == 0 {
-		policy = api.DefaultPreviousImagePullPolicy
-	}
-
 	tag := firstNonEmpty(config.IncrementalFromTag, config.Tag)
 
 	startTime := time.Now()
-	result, err := dockerpkg.PullImage(tag, builder.incrementalDocker, policy, false)
+	result, err := dockerpkg.PullImage(tag, builder.incrementalDocker, config.PreviousImagePullPolicy)
 	builder.result.BuildInfo.Stages = api.RecordStageAndStepInfo(builder.result.BuildInfo.Stages, api.StagePullImages, api.StepPullPreviousImage, startTime, time.Now())
 
 	if err != nil {
