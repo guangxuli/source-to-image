@@ -73,9 +73,35 @@ s2i::build::host_platform() {
 #     then just the host architecture is built.
 s2i::build::build_binaries() {
   # Create a sub-shell so that we don't pollute the outer environment
+  s2i::build::build_binaries_common
+}
+
+
+# Build release binaries targets specified
+#
+# Input:
+#   $@ - targets and go flags.  If no targets are set then all binaries targets
+#     are built.
+#   S2I_BUILD_PLATFORMS - Incoming variable of targets to build for.  If unset
+#     then just the host architecture is built.
+s2i::build::build_release_binaries() {
+  # Create a sub-shell so that we don't pollute the outer environment
+  s2i::build::build_binaries_common "-s -w "
+}
+
+# Build common binaries targets specified
+#
+# Input:
+#   $@ - targets and go flags.  If no targets are set then all binaries targets
+#     are built.
+#   S2I_BUILD_PLATFORMS - Incoming variable of targets to build for.  If unset
+#     then just the host architecture is built.
+s2i::build::build_binaries_common() {
+  # Create a sub-shell so that we don't pollute the outer environment
   (
     # Check for `go` binary and set ${GOPATH}.
     s2i::build::setup_env
+    debug_ldflag=${1}
 
     # Fetch the version.
     local version_ldflags
@@ -89,12 +115,13 @@ s2i::build::build_binaries() {
       echo "++ Building go targets for ${platform}:" "${targets[@]}"
       go install "${goflags[@]:+${goflags[@]}}" \
           -pkgdir "${S2I_OUTPUT_PKGDIR}" \
-          -ldflags "${version_ldflags}" \
+          -ldflags "${debug_ldflag}+${version_ldflags}" \
           "${binaries[@]}"
       s2i::build::unset_platform_envs "${platform}"
     done
   )
 }
+
 
 # Generates the set of target packages, binaries, and platforms to build for.
 # Accepts binaries via $@, and platforms via S2I_BUILD_PLATFORMS, or defaults to
